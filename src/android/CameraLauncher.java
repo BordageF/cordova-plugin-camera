@@ -705,8 +705,12 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         String fileLocation = FileHelper.getRealPath(uri, this.cordova);
         LOG.d(LOG_TAG, "File location is: " + fileLocation);
 
+        // HACK : On API 29, when RequestLegacyExternalStorage is not set to true, using the real path seems to strip our ability to read the image,
+        // making it impossible to read the image once outside of the plugin. however, the uriString is still valid, although some extra work will be needed to properly extract the image.
+        boolean useContentUri = android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.Q && !android.os.Environment.isExternalStorageLegacy(new File(fileLocation));
+
         String uriString = uri.toString();
-        String finalLocation = fileLocation != null ? fileLocation : uriString;
+        String finalLocation = (fileLocation != null && !useContentUri) ? fileLocation : uriString;
         String mimeType = FileHelper.getMimeType(uriString, this.cordova);
 
         if (finalLocation == null) {
